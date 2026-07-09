@@ -1,0 +1,8 @@
+node_modules/
+dist
+/coverage
+.eslintcache
+
+# System Files
+.DS_Store
+Thumbs.db
