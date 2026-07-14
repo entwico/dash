@@ -7,21 +7,30 @@ type MaybeSettledAll<T extends readonly MaybePromise<unknown>[]> = {
 };
 
 /**
- * Chains a transformation on a MaybePromise value.
- * If the value is a Promise, uses .then(). Otherwise, calls fn directly.
+ * Chains a transformation on a MaybePromise value, mirroring `Promise.prototype.then`.
+ * If the value is a Promise, uses `.then(onFulfilled, onRejected)`. Otherwise, calls
+ * `onFulfilled` directly — a synchronous value has no rejection branch, so `onRejected`
+ * only ever runs on the async path.
  *
  * @example
  * ```ts
  * const result = maybeThen(map.get('key'), (value) => value.name);
  * // result is MaybePromise<string>
+ *
+ * const safe = maybeThen(load(), (v) => v.name, () => 'anonymous');
+ * // handles both branches in a single promise on the async path
  * ```
  */
-export function maybeThen<T, R>(value: MaybePromise<T>, fn: (v: T) => MaybePromise<R>): MaybePromise<R> {
+export function maybeThen<T, R>(
+  value: MaybePromise<T>,
+  onFulfilled: (v: T) => MaybePromise<R>,
+  onRejected?: ((e: unknown) => MaybePromise<R>) | undefined,
+): MaybePromise<R> {
   if (value instanceof Promise) {
-    return value.then(fn); // eslint-disable-line unicorn/prefer-await
+    return value.then(onFulfilled, onRejected); // eslint-disable-line unicorn/prefer-await
   }
 
-  return fn(value);
+  return onFulfilled(value);
 }
 
 /**
@@ -38,6 +47,27 @@ export function maybeCatch<T>(value: MaybePromise<T>, fn: (e: unknown) => MaybeP
   if (value instanceof Promise) {
     return value.catch(fn); // eslint-disable-line unicorn/prefer-await
   }
+
+  return value;
+}
+
+/**
+ * Runs a callback once a MaybePromise settles, regardless of outcome, mirroring
+ * `Promise.prototype.finally`. If the value is a Promise, uses `.finally()`; otherwise
+ * calls `onFinally` synchronously. The original value/reason is passed through unchanged.
+ *
+ * @example
+ * ```ts
+ * const result = maybeFinally(fetchRows(), () => spinner.stop());
+ * // spinner stops whether fetchRows resolves or rejects; no extra transform
+ * ```
+ */
+export function maybeFinally<T>(value: MaybePromise<T>, onFinally: () => void): MaybePromise<T> {
+  if (value instanceof Promise) {
+    return value.finally(onFinally); // eslint-disable-line unicorn/prefer-await
+  }
+
+  onFinally();
 
   return value;
 }

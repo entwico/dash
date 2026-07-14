@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { maybeAll, maybeAllSettled, maybeCatch, maybeThen } from './maybe-promise';
+import { maybeAll, maybeAllSettled, maybeCatch, maybeFinally, maybeThen } from './maybe-promise';
 
 describe('maybeThen', () => {
   it('transforms sync values synchronously', () => {
@@ -9,6 +9,18 @@ describe('maybeThen', () => {
 
   it('chains promises', async () => {
     await expect(maybeThen(Promise.resolve(2), (v) => v * 2)).resolves.toBe(4);
+  });
+
+  it('ignores onRejected on the sync path', () => {
+    expect(maybeThen(2, (v) => v * 2, () => -1)).toBe(4);
+  });
+
+  it('recovers rejected promises via onRejected', async () => {
+    await expect(maybeThen(Promise.reject(new Error('boom')), (v) => v, () => -1)).resolves.toBe(-1);
+  });
+
+  it('leaves rejections unhandled when no onRejected is given', async () => {
+    await expect(maybeThen(Promise.reject(new Error('boom')), (v) => v)).rejects.toThrow('boom');
   });
 });
 
@@ -19,6 +31,38 @@ describe('maybeCatch', () => {
 
   it('catches promise rejections', async () => {
     await expect(maybeCatch(Promise.reject(new Error('boom')), () => -1)).resolves.toBe(-1);
+  });
+});
+
+describe('maybeFinally', () => {
+  it('runs the callback synchronously and returns the value', () => {
+    let ran = false;
+    const result = maybeFinally(2, () => {
+      ran = true;
+    });
+
+    expect(ran).toBe(true);
+    expect(result).toBe(2);
+  });
+
+  it('runs the callback after a promise resolves and passes the value through', async () => {
+    let ran = false;
+    const result = maybeFinally(Promise.resolve(2), () => {
+      ran = true;
+    });
+
+    await expect(result).resolves.toBe(2);
+    expect(ran).toBe(true);
+  });
+
+  it('runs the callback after a promise rejects and passes the reason through', async () => {
+    let ran = false;
+    const result = maybeFinally(Promise.reject(new Error('boom')), () => {
+      ran = true;
+    });
+
+    await expect(result).rejects.toThrow('boom');
+    expect(ran).toBe(true);
   });
 });
 
