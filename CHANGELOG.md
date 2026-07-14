@@ -1,5 +1,11 @@
 # @entwico/dash
 
+## 1.2.0
+
+### Minor Changes
+
+- da25010: add optional onRejected to maybeThen and a new maybeFinally
+
 ## 1.1.0
 
 ### Minor Changes
