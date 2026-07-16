@@ -1,5 +1,11 @@
 # @entwico/dash
 
+## 1.3.0
+
+### Minor Changes
+
+- 5b560d5: add `chunk` to split an array into fixed-size batches
+
 ## 1.2.0
 
 ### Minor Changes
