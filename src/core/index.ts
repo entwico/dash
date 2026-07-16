@@ -1,5 +1,6 @@
 export * from './assert';
 export * from './capitalize';
+export * from './chunk';
 export * from './create-batcher';
 export * from './debounce';
 export * from './deep-freeze';
