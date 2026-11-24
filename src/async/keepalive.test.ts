@@ -53,4 +53,34 @@ describe('keepalive', () => {
 
     expect(out).toEqual([1]);
   });
+
+  it('stops cleanly when signal aborts during a backoff wait', async () => {
+    const controller = new AbortController();
+    let opens = 0;
+
+    const factory = (): AsyncIterable<number> => ({
+      [Symbol.asyncIterator]: () => ({
+        next: () => {
+          opens++;
+
+          return Promise.reject(new Error('source failed'));
+        },
+      }),
+    });
+
+    const stream = keepalive(factory, { signal: controller.signal });
+
+    const done = (async () => {
+      for await (const _value of stream) {
+        // the source never yields
+      }
+    })();
+
+    // the source has failed by now, and the first backoff takes over a second
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    controller.abort();
+
+    await expect(done).resolves.toBeUndefined();
+    expect(opens).toBe(1);
+  });
 });

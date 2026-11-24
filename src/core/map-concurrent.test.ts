@@ -77,4 +77,29 @@ describe('mapConcurrent', () => {
       ),
     ).rejects.toThrow('boom');
   });
+
+  it('starts no further item once one has failed', async () => {
+    const started: number[] = [];
+
+    const result = mapConcurrent(
+      Array.from({ length: 20 }, (_, index) => index),
+      async (item) => {
+        started.push(item);
+        await sleep(5);
+
+        if (item === 1) {
+          throw new Error('failed');
+        }
+
+        return item;
+      },
+      2,
+    );
+
+    await expect(result).rejects.toThrow('failed');
+    await sleep(100);
+
+    // the two that ran when it failed, and the one the other worker had already moved on to
+    expect(started.length).toBeLessThanOrEqual(3);
+  });
 });

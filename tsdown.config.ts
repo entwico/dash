@@ -7,6 +7,8 @@ export default defineConfig({
     match: 'src/match/index.ts',
     cn: 'src/cn/index.ts',
     react: 'src/react/index.ts',
+    testing: 'src/testing/index.ts',
+    'testing/node': 'src/testing-node/index.ts',
   },
   format: ['esm'],
   dts: true,

@@ -16,6 +16,10 @@
  * new `.subscribe(...)` calls register a no-op unsubscribe.
  *
  * Backpressure: unbounded queue per pending iterator. Intended for low-frequency events.
+ *
+ * An iterator has to be closed: leaving a `for await` closes it, an iterator taken by hand needs
+ * its `return()`. One that is dropped without it stays a consumer of the subject, and its queue
+ * takes every later value for as long as the subject lives.
  */
 export type AsyncIterableSubject<T> = AsyncIterable<T> & {
   next: (value: T) => void;

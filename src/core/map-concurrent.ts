@@ -1,6 +1,7 @@
 /**
  * Order-preserving concurrent map: runs `fn` over the items with a sliding pool of at most
- * `concurrency` workers, so a slow item never stalls the others. Errors propagate via Promise.all.
+ * `concurrency` workers, so a slow item never stalls the others. Rejects with the first error; items
+ * already running finish, no further item is started.
  */
 export async function mapConcurrent<T, R>(
   items: readonly T[],
@@ -10,15 +11,24 @@ export async function mapConcurrent<T, R>(
   const results: R[] = Array.from({ length: items.length });
   let nextIndex = 0;
 
+  let failed = false;
+
   async function worker(): Promise<void> {
-    while (true) {
+    // the caller has its error by then: nothing would take the results of the remaining items
+    while (!failed) {
       const i = nextIndex++;
 
       if (i >= items.length) {
         return;
       }
 
-      results[i] = await fn(items[i]!, i);
+      try {
+        results[i] = await fn(items[i]!, i);
+      } catch (error) {
+        failed = true;
+
+        throw error;
+      }
     }
   }
 
