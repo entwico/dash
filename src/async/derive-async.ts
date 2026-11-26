@@ -75,7 +75,6 @@ export function deriveAsync<T, R>(
 
       return {
         next(): Promise<IteratorResult<R>> {
-          // one pull at a time, answered in the order they were asked for
           const previous = queue;
 
           const result = (async () => {

@@ -2,13 +2,8 @@
  * Multicast event source with `next` / `error` / `complete` (Subject semantics) plus an
  * `AsyncIterable` view. Two consumption modes that fan out from the same source:
  *
- * - `for await (const v of subject)` — iteration. Each `[Symbol.asyncIterator]()` call returns
- *   a fresh per-iterator queue. Stop by `break`ing the loop. On `.error(err)` the iterator's
- *   pending `next()` rejects, propagating into the for-await as a thrown exception.
- *
- * - `subject.subscribe(observerOrNext)` — observer style. Pass either a full/partial observer
- *   `{ next?, error?, complete? }` or just an `(value) => …` function as the `next`-only shortcut.
- *   Returns an unsubscribe function. Missing handlers default to no-ops.
+ * - `for await (const v of subject)` — each iterator gets its own queue; `.error(err)` rejects its pending `next()`.
+ * - `subject.subscribe(observerOrNext)` — observer style; missing handlers default to no-ops.
  *
  * Producer side: call `.next(value)` to emit, `.error(err)` to fail the subject (all consumers
  * see the error and are detached), `.complete()` to close cleanly (all consumers see done and

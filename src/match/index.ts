@@ -6,9 +6,6 @@ export type StringPattern =
   | { includes: string }
   | { pattern: RegExp };
 
-/**
- * Checks if a string matches a single pattern.
- */
 export function matches(value: string, pattern: StringPattern): boolean {
   if (typeof pattern === 'function') {
     return pattern(value);
@@ -34,7 +31,6 @@ export function matches(value: string, pattern: StringPattern): boolean {
 }
 
 /**
- * Checks if a string matches any of the patterns.
  * For repeated matching against the same pattern set, prefer {@link createMatcher}.
  */
 export function matchesAny(value: string, patterns: readonly StringPattern[]): boolean {

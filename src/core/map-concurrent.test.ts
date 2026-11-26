@@ -62,7 +62,7 @@ describe('mapConcurrent', () => {
     expect(spawned).toBe(2);
   });
 
-  it('propagates errors via Promise.all', async () => {
+  it('rejects with the error of a failing item', async () => {
     await expect(
       mapConcurrent(
         [1, 2, 3],

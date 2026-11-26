@@ -54,19 +54,19 @@ Zero-dependency streaming and retry primitives — the rxjs patterns without rxj
 | Export                                                     | Purpose                                                                                                                                    |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `createAsyncIterableSubject()` / `AsyncIterableSubject<T>` | multicast source with `next` / `error` / `complete`, consumable via `for await` or `subscribe(observerOrNext)`                             |
-| `firstAsync(iter)`                                         | first yielded value, then disposes the iterator; throws if the iterable completes empty (≈ `firstValueFrom`)                               |
+| `firstAsync(iter)`                                         | first yielded value; throws if the iterable completes empty (≈ `firstValueFrom`)                               |
 | `mapAsync(iter, fn)` / `filterAsync(iter, predicate)`      | lazy operators over an `AsyncIterable`                                                                                                     |
-| `concatAsync(iter)`                                        | concatenate all yielded arrays into one (plain collection: `Array.fromAsync`)                                                              |
+| `concatAsync(iter)`                                        | concatenate all yielded arrays into one                                                              |
 | `mergeAsync(sources)`                                      | merge multiple `AsyncIterable`s into one; completes when all complete, errors when any errors (≈ `merge`)                                  |
 | `debounceAsync(iter, ms)`                                  | rolling debounce: yield the latest value after `ms` of silence; a slow consumer only sees the most recent settled value (≈ `debounceTime`) |
 | `exponentialBackoff(attempt, options?)`                    | jittered exponential delay, abortable; bounds configurable via `maxDelayMs` / `jitterMinMs` / `jitterMaxMs`                                |
 | `retryWithBackoff(fn, options?)`                           | retry `fn` with exponential backoff indefinitely until it resolves, abortable via `signal`                                                 |
-| `intervalAsync(ms)`                                        | periodic tick stream yielding 0, 1, 2, … every `ms`; disposing the iterator clears the timer (≈ `interval`)                                |
+| `intervalAsync(ms)`                                        | periodic tick stream yielding 0, 1, 2, … every `ms` (≈ `interval`)                                |
 | `keepalive(factory, options?)`                             | keep a long-running `AsyncIterable` alive: re-subscribe with backoff on error or completion, stop on `signal` abort                        |
 
 ## Match (`@entwico/dash/match`)
 
-A pattern union that keeps cheap checks cheap — `startsWith` beats a regex when a prefix is all you need:
+A pattern union for matching strings:
 
 ```ts
 import { type StringPattern, createMatcher } from "@entwico/dash/match";
@@ -76,7 +76,7 @@ const isExcluded = createMatcher([{ exact: "/favicon.ico" }, { prefix: "/_astro/
 isExcluded("/_astro/chunk.js"); // true
 ```
 
-`createMatcher` buckets patterns by check cost at creation time: all `exact` patterns collapse into a single `Set` lookup, then prefixes / suffixes / substrings, then regexps and functions. For one-shot checks there are `matches(value, pattern)` and `matchesAny(value, patterns)`.
+`createMatcher` compiles a pattern set once for repeated checks. For one-shot checks there are `matches(value, pattern)` and `matchesAny(value, patterns)`.
 
 ## cn (`@entwico/dash/cn`)
 

@@ -30,11 +30,9 @@ export function omitUndefined<T extends Record<string, unknown>>(
 
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined) {
-      // recursively process nested objects
       if (recursive && value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
         (result as Record<string, unknown>)[key] = omitUndefined(value as Record<string, unknown>, recursive);
       } else if (recursive && Array.isArray(value)) {
-        // recursively process arrays
         (result as Record<string, unknown>)[key] = value
           .filter((item) => item !== undefined)
           .map((item) => {
@@ -44,7 +42,6 @@ export function omitUndefined<T extends Record<string, unknown>>(
             return item;
           });
       } else {
-        // handle primitive values
         (result as Record<string, unknown>)[key] = value;
       }
     }

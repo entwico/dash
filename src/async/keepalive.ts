@@ -88,14 +88,13 @@ export async function* keepalive<T>(
         attempt = 0;
       }
 
-      // source completed cleanly — re-subscribe immediately
       attempt = 0;
     } catch (error) {
       if (signal?.aborted) {
         return;
       }
 
-      // swallow + back off, then retry. callers that want the error to surface should not use keepalive
+      // errors are dropped by design: keepalive never surfaces them
       void error;
 
       try {

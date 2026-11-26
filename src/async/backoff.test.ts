@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { exponentialBackoff, retryWithBackoff } from './backoff';
 
 describe('exponentialBackoff', () => {
-  it('returns a Promise that resolves', async () => {
+  it('resolves once the delay of the attempt has passed', async () => {
     vi.useFakeTimers();
 
     try {
@@ -17,7 +17,7 @@ describe('exponentialBackoff', () => {
     }
   });
 
-  it('honors custom bounds', async () => {
+  it('caps the delay at maxDelayMs plus jitter', async () => {
     vi.useFakeTimers();
 
     try {

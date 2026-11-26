@@ -79,7 +79,7 @@ describe('createMatcher', () => {
     expect(matcher('')).toBe(false);
   });
 
-  it('collapses exact patterns into a set lookup', () => {
+  it('matches against a large set of exact patterns', () => {
     const matcher = createMatcher(Array.from({ length: 100 }, (_, i) => ({ exact: `/path-${i}` })));
 
     expect(matcher('/path-42')).toBe(true);
