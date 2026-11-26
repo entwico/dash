@@ -102,6 +102,8 @@ describe.each(['complete', 'error'] as const)('a subject that ended (%s)', (end)
     const subject = createAsyncIterableSubject<Payload>();
     const consumers: WeakRef<object>[] = [];
 
+    // a block would keep the bindings alive in the async frame; only a function scope lets them be collected
+    // eslint-disable-next-line unicorn/prefer-block-statement-over-iife
     (() => {
       const listener = { next: () => {}, error: () => {} };
       const iterator = subject[Symbol.asyncIterator]();

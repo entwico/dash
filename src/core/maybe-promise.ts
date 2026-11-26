@@ -27,7 +27,8 @@ export function maybeThen<T, R>(
   onRejected?: ((e: unknown) => MaybePromise<R>) | undefined,
 ): MaybePromise<R> {
   if (value instanceof Promise) {
-    return value.then(onFulfilled, onRejected); // eslint-disable-line unicorn/prefer-await
+    // .catch() would also route errors thrown by onFulfilled into onRejected
+    return value.then(onFulfilled, onRejected); // eslint-disable-line unicorn/prefer-await, unicorn/prefer-then-catch
   }
 
   return onFulfilled(value);

@@ -6,7 +6,3 @@ minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
   - '@entwico/*'
-
-peerDependencyRules:
-  allowedVersions:
-    'eslint-plugin-jsx-a11y>eslint': '10' # works fine on v10
