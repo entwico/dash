@@ -116,3 +116,52 @@ describe('mergeAsync', () => {
     await iterator.return!();
   });
 });
+
+describe('mergeAsync after a source failed', () => {
+  it('hands out the values it had buffered, then rejects every later next()', async () => {
+    const a = createAsyncIterableSubject<number>();
+    const iterator = mergeAsync([a])[Symbol.asyncIterator]();
+
+    a.next(1);
+    await tick();
+    a.error(new Error('boom'));
+    await tick();
+
+    await expect(iterator.next()).resolves.toEqual({ value: 1, done: false });
+    await expect(iterator.next()).rejects.toThrow('boom');
+    await expect(iterator.next()).rejects.toThrow('boom');
+  });
+
+  it('keeps the first error when another source fails as well', async () => {
+    const a = createAsyncIterableSubject<number>();
+    const b = createAsyncIterableSubject<number>();
+    const iterator = mergeAsync([a, b])[Symbol.asyncIterator]();
+    const waiting = iterator.next();
+
+    a.error(new Error('first'));
+    b.error(new Error('second'));
+
+    await expect(waiting).rejects.toThrow('first');
+    await expect(iterator.next()).rejects.toThrow('first');
+  });
+
+  it('ignores a source that fails after the consumer left', async () => {
+    let fail: (error: Error) => void = () => {};
+
+    const source: AsyncIterable<number> = {
+      [Symbol.asyncIterator]: () => ({
+        next: () => new Promise<IteratorResult<number>>((_resolve, reject) => void (fail = reject)),
+      }),
+    };
+
+    const iterator = mergeAsync([source])[Symbol.asyncIterator]();
+    const waiting = iterator.next();
+
+    await iterator.return!();
+    fail(new Error('late'));
+    await tick();
+
+    await expect(waiting).resolves.toEqual({ value: undefined, done: true });
+    await expect(iterator.next()).resolves.toEqual({ value: undefined, done: true });
+  });
+});

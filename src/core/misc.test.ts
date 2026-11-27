@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { assert } from './assert';
 import { capitalize } from './capitalize';
 import { defined, truthy } from './defined';
+import { markAsUsed, noop } from './noop';
 import { sleep } from './sleep';
 
 describe('assert', () => {
@@ -67,5 +68,15 @@ describe('sleep', () => {
     controller.abort(new Error('aborted'));
 
     await expect(promise).rejects.toThrow(/aborted/);
+  });
+});
+
+describe.each([
+  ['noop', noop],
+  ['markAsUsed', markAsUsed],
+])('%s', (_name, fn) => {
+  it('takes any arguments and answers with nothing', () => {
+    expect(fn()).toBeUndefined();
+    expect(fn(1, 'two', { three: 3 })).toBeUndefined();
   });
 });

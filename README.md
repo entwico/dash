@@ -31,11 +31,17 @@ All peer dependencies are optional — install only what the entry points you us
 | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `assert(expr, message?)`                         | assertion with `asserts expr` narrowing; `message` may be a string or an `Error`                               |
 | `capitalize(str)`                                | uppercase the first letter                                                                                     |
+| `clamp(value, min, max)`                         | the value, or the bound it is beyond                                                                           |
 | `createBatcher(onFlush, delayMs)`                | batch calls into one flush after a delay                                                                       |
 | `debounce(fn, wait)`                             | classic trailing debounce                                                                                      |
 | `deepFreeze(value)`                              | recursive `Object.freeze`, returns `ReadonlyDeep<T>`                                                           |
 | `defined(val)` / `truthy(val)`                   | type-guard filters for `null` / `undefined` / falsy                                                            |
+| `errorMessage(error, fallback?)`                 | message of whatever was thrown: `error.message` for an `Error`, otherwise the fallback or `String(error)`      |
+| `escapeHtml(text)`                               | escape `& < > " '` for element content and quoted attribute values                                             |
+| `escapeRegExp(text)`                             | escape regular expression syntax, so the text matches itself                                                   |
+| `isValidEmail(value)` / `EMAIL_PATTERN`          | loose email shape check (`anything@anything.anything`), friendly to umlauts and IDN domains                    |
 | `indexBy(array, keyFn, valueFn?)`                | index an array into a `Map`; key/value selectors are property names or functions                               |
+| `jsonForScript(value)`                           | JSON that is safe inside an inline `<script>`: `<` is escaped, so a value cannot end the tag                   |
 | `mapConcurrent(items, fn, concurrency)`          | order-preserving concurrent map with a bounded worker pool                                                     |
 | `maybeThen(value, fn)` / `maybeCatch(value, fn)` | chain transformations on `MaybePromise` values without unwrapping                                              |
 | `maybeAll(values)` / `maybeAllSettled(values)`   | `Promise.all` / `Promise.allSettled` over `MaybePromise` values, synchronous when all values are               |
@@ -44,6 +50,8 @@ All peer dependencies are optional — install only what the entry points you us
 | `optionalize(fn, options?)`                      | lift a function to accept `null` / `undefined`; `defaultValue` / `strategy` (`'nullish'` \| `'falsy'`) options |
 | `retry(fn, options?)`                            | retry with a fixed delay; `retries` / `delayMs` / `signal` / `onError` options                                 |
 | `sleep(ms, signal?)`                             | promise-based delay, abortable via `AbortSignal`                                                               |
+| `truncate(text, max)`                            | cut text to `max` characters, the trailing `…` included                                                        |
+| `uniq(array)` / `uniqBy(array, keyFn)`           | distinct values, or the first item per key; the key selector is a property name or a function                  |
 
 Types: `MaybePromise<T>`, `ReadonlyDeep<T>`.
 
@@ -90,10 +98,14 @@ cn("p-2", condition && "p-4"); // tailwind conflicts resolved in favor of the la
 
 ## React (`@entwico/dash/react`)
 
+- `useCopyToClipboard(resetMs?)` — `{ copied, copy(text) }`: copy to the clipboard and show "copied" for `resetMs` (2000); a clipboard that refuses never claims a copy
 - `useDebouncedValue(value, delay)` — the value, updated only after it has stayed unchanged for the given delay
 - `useEffectAfterMount(effect, deps?)` — run the effect on updates, skip the initial mount
-- `useEffectOnce(effect)` — run the effect exactly once on mount
+- `useEffectOnce(effect)` — run the effect exactly once on mount, StrictMode included; its cleanup runs a microtask after the unmount
 - `useIsMobile()` — whether the viewport is below the mobile breakpoint (768px); `false` during SSR
+- `useMediaQuery(query)` — whether a media query matches; `false` during SSR and hydration
+- `useNow(options?)` — ticking clock: the current timestamp, re-rendering every `intervalMs` (1000) while `active`
+- `useScrollLock(locked)` — lock page scroll while an overlay is open; counted, so overlapping overlays don't unlock each other
 
 ## Testing (`@entwico/dash/testing`)
 

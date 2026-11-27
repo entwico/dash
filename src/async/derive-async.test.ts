@@ -64,6 +64,17 @@ describe.each(derivations)('%s', (_name, derive) => {
     await expect(iterator.next()).resolves.toEqual({ value: undefined, done: true });
   });
 
+  it('closes the source once, however often it is closed itself', async () => {
+    const { source, closed } = createSource();
+    const iterator = derive(source)[Symbol.asyncIterator]();
+
+    void iterator.next();
+    await iterator.return!();
+    await iterator.return!();
+
+    expect(closed()).toBe(1);
+  });
+
   it('answers values that were asked for at once in their order', async () => {
     const { subject, source } = createSource();
     const iterator = derive(source)[Symbol.asyncIterator]();

@@ -52,6 +52,17 @@ describe('trackSockets', () => {
   });
 });
 
+describe('listenLocally', () => {
+  it('rejects for a server that cannot listen', async () => {
+    const server = createServer();
+
+    trackSockets(server);
+    await listenLocally(server);
+
+    await expect(listenLocally(server)).rejects.toThrow();
+  });
+});
+
 describe('closeTestServers', () => {
   it('closes the connections and frees the port', async () => {
     const echo = await startEcho();
@@ -145,6 +156,33 @@ describe('startProxy', () => {
     await expect.poll(() => proxy.open()).toBe(0);
   });
 
+  it('keeps the first kill of a connection: one that swallows is not stalled by a later kill', async () => {
+    const echo = await startEcho();
+    const proxy = await startProxy(echo.port);
+    const client = await connectTo(proxy.port);
+
+    await expect.poll(() => proxy.open()).toBe(1);
+    proxy.kill('swallow');
+    proxy.kill('stall');
+
+    client.socket.write('unread by a stalled proxy');
+    client.socket.destroy();
+
+    await expect.poll(() => proxy.open()).toBe(0);
+  });
+
+  it('keeps carrying a live connection through readStalled()', async () => {
+    const echo = await startEcho();
+    const proxy = await startProxy(echo.port);
+    const client = await connectTo(proxy.port);
+
+    await expect.poll(() => proxy.open()).toBe(1);
+    proxy.readStalled();
+    client.socket.write('hello');
+
+    await expect.poll(() => client.received()).toBe('hello');
+  });
+
   it('closes the client when the server behind it closes a live connection', async () => {
     const echo = await startEcho();
     const proxy = await startProxy(echo.port);
@@ -172,6 +210,17 @@ describe('startSilentServer', () => {
     expect(client.closed()).toBe(false);
     expect(silent.open()).toBe(1);
     expect(silent.accepted()).toBe(1);
+  });
+
+  it('counts bytes, not characters, for a socket that was given an encoding', async () => {
+    const silent = await startSilentServer((socket) => socket.setEncoding('utf8'));
+    const client = await connectTo(silent.port);
+
+    client.socket.write('é');
+    await expect.poll(() => silent.bytesReceived()).toBe(2);
+
+    client.socket.write('é');
+    await expect.poll(() => silent.bytesReceived()).toBe(4);
   });
 
   it('lets a test answer by hand up to the step where it goes silent', async () => {

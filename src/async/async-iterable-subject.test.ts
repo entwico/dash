@@ -163,3 +163,99 @@ describe('createAsyncIterableSubject', () => {
     await expect(iter.next()).rejects.toThrow('boom');
   });
 });
+
+describe('a subject that has ended', () => {
+  it('is done at once for an iterator taken after complete', async () => {
+    const s = createAsyncIterableSubject<number>();
+
+    s.complete();
+
+    const iter = s[Symbol.asyncIterator]();
+
+    await expect(iter.next()).resolves.toEqual({ value: undefined, done: true });
+    await expect(iter.return!()).resolves.toEqual({ value: undefined, done: true });
+  });
+
+  it('lets an iterator taken after error be closed', async () => {
+    const s = createAsyncIterableSubject<number>();
+
+    s.error(new Error('boom'));
+
+    await expect(s[Symbol.asyncIterator]().return!()).resolves.toEqual({ value: undefined, done: true });
+  });
+
+  it('hands an iterator the values it had not read before complete, then is done', async () => {
+    const s = createAsyncIterableSubject<number>();
+    const iter = s[Symbol.asyncIterator]();
+
+    s.next(1);
+    s.next(2);
+    s.complete();
+
+    await expect(iter.next()).resolves.toEqual({ value: 1, done: false });
+    await expect(iter.next()).resolves.toEqual({ value: 2, done: false });
+    await expect(iter.next()).resolves.toEqual({ value: undefined, done: true });
+  });
+
+  it('hands an iterator the values it had not read before error, then rejects', async () => {
+    const s = createAsyncIterableSubject<number>();
+    const iter = s[Symbol.asyncIterator]();
+
+    s.next(1);
+    s.error(new Error('boom'));
+
+    await expect(iter.next()).resolves.toEqual({ value: 1, done: false });
+    await expect(iter.next()).rejects.toThrow('boom');
+  });
+
+  it('drops whatever is sent after it ended', () => {
+    const completed = createAsyncIterableSubject<number>();
+    const failed = createAsyncIterableSubject<number>();
+    const observer = { next: vi.fn(), error: vi.fn(), complete: vi.fn() };
+
+    completed.subscribe(observer);
+    failed.subscribe(observer);
+
+    completed.complete();
+    completed.next(1);
+    completed.error(new Error('late'));
+    completed.complete();
+
+    failed.error(new Error('boom'));
+    failed.next(1);
+    failed.complete();
+    failed.error(new Error('late'));
+
+    expect(observer.next).not.toHaveBeenCalled();
+    expect(observer.complete).toHaveBeenCalledTimes(1);
+    expect(observer.error).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('an iterator that is closed by hand', () => {
+  it('ends a next() that was waiting, and takes no later value', async () => {
+    const s = createAsyncIterableSubject<number>();
+    const iter = s[Symbol.asyncIterator]();
+    const waiting = iter.next();
+
+    await expect(iter.return!()).resolves.toEqual({ value: undefined, done: true });
+    await expect(waiting).resolves.toEqual({ value: undefined, done: true });
+
+    s.next(1);
+    s.complete();
+
+    await expect(iter.next()).resolves.toEqual({ value: undefined, done: true });
+  });
+
+  it('rejects throw() with the error it was given, and takes no later value', async () => {
+    const s = createAsyncIterableSubject<number>();
+    const iter = s[Symbol.asyncIterator]();
+
+    await expect(iter.throw!(new Error('thrown'))).rejects.toThrow('thrown');
+
+    s.next(1);
+    s.complete();
+
+    await expect(iter.next()).resolves.toEqual({ value: undefined, done: true });
+  });
+});
